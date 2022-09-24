@@ -10,7 +10,7 @@ import {
 import { AiFillCheckCircle } from "react-icons/ai";
 
 type Props = {
-  step: 1 | 2 | 3;
+  step: number;
   title: string;
   text: string;
   status: "todo" | "done" | "current";

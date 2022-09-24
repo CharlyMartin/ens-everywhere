@@ -1,5 +1,6 @@
 import React from "react";
 import { useRouter } from "next/router";
+import { useWeb3React } from "@web3-react/core";
 import {
   Alert,
   AlertDescription,
@@ -19,14 +20,88 @@ import {
 import Heading from "../../../components/heading";
 import Step from "../../../components/step";
 import Link from "next/link";
+import { injected } from "../../../chain/web3-connectors";
 
 export default function Register() {
+  const { account, library, chainId, activate } = useWeb3React()
   const { query } = useRouter();
   const [step, setStep] = React.useState<number>(1);
   const [year, setYear] = React.useState<number>(1);
+  const [otherRegistrations, setOtherRegistrations] = React.useState(Math.floor(Math.random() * 4))
+  const timer = React.useRef<any>(null)
 
   if (!query.id) {
     return "No domain provided";
+  }
+
+  const randomlyIncreasePending = () => {
+    setOtherRegistrations(current => {
+      if (current < 8) {
+        timer.current = setTimeout(randomlyIncreasePending, 1500)
+      } else {
+        setStep(3)
+      }
+
+      return Math.random() > 0.6 ? current + 1 : current
+    })
+  }
+
+  const commit = async () => {
+    const signer = library.getSigner()
+
+    const domain = {
+      name: 'ENS Everywhere',
+      version: '1',
+      chainId: chainId,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+    };
+
+    const types = {
+      Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'duration', type: 'uint32' },
+      ]
+    };
+
+    // The data to sign
+    const value = {
+      name: `${query.id}.eth`,
+      duration: year * 365 * 24 * 60 * 60,
+    };
+
+    await signer._signTypedData(domain, types, value);
+
+    setStep(2)
+    timer.current = setTimeout(randomlyIncreasePending, 1500)
+  }
+
+  const complete = async () => {
+    const signer = library.getSigner()
+
+    const domain = {
+      name: 'ENS Everywhere',
+      version: '1',
+      chainId: chainId,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+    };
+
+    const types = {
+      Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'duration', type: 'uint32' },
+      ]
+    };
+
+    // The data to sign
+    const value = {
+      name: `${query.id}.eth`,
+      duration: year * 365 * 24 * 60 * 60,
+    };
+
+    await signer._signTypedData(domain, types, value);
+
+    setStep(4)
+    timer.current = setTimeout(() => setStep(5), 5000)
   }
 
   return (
@@ -118,11 +193,11 @@ export default function Register() {
               </Box>
               <Button
                 colorScheme="blue"
-                onClick={() => setStep(2)}
+                onClick={account ? commit : () => activate(injected)}
                 w="100%"
                 mt={2}
               >
-                Confirm registration
+                {account ? 'Confirm registration' : 'Connect wallet'}
               </Button>
             </Box>
           </Flex>
@@ -130,27 +205,68 @@ export default function Register() {
 
         <Step
           step={2}
-          title="Wait for settlement"
+          title="Wait for other registrations"
           text="You wait while we bulk together the transactions and settle them on Ethereum."
           status={getStatus(2)}
         >
           <Box flexBasis="55%">
             <Text fontSize="2xl" fontWeight="light" pb={2}>
-              1 hour, 20 min, 30 seconds
+              Pending registrations: {otherRegistrations} (waiting for 8)
             </Text>
             <Text width="55%">
-              Your transaction has been pooled together with other buyers, and
+              Your transaction will be pooled together with other buyers, and
               is being sent to L1 for settlement. No action further action
               required on your side, come back to this page again once the timer
               is up to see the confirmation of your registration.
             </Text>
           </Box>
-          <Button colorScheme="blue" onClick={() => setStep(3)} mt={4}>
-            Done
+        </Step>
+
+        <Step
+          step={3}
+          title="Reveal registration"
+          text="Reveal your domain registration to complete the process."
+          status={getStatus(3)}
+        >
+          <Box flexBasis="55%">
+            <Text fontSize="2xl" fontWeight="light" pb={2}>
+              Reveal your registration
+            </Text>
+            <Text width="55%">
+              Your transaction will be pooled together with other buyers, and
+              is being sent to L1 for settlement. No action further action
+              required on your side, come back to this page again once the timer
+              is up to see the confirmation of your registration.
+            </Text>
+          </Box>
+          <Button
+            colorScheme="blue"
+            onClick={complete}
+            w="100%"
+            mt={2}
+          >
+            Complete registration
           </Button>
         </Step>
 
-        {step == 3 && (
+        <Step
+          step={4}
+          title="Registration"
+          text="Domain is registered on L1 and transferred to L2"
+          status={getStatus(4)}
+        >
+          <Box flexBasis="55%">
+            <Text fontSize="2xl" fontWeight="light" pb={2}>
+              Registration in progress
+            </Text>
+            <Text width="55%">
+              Your domain is being registered on Ethereum L1, and transferred to
+              L2. This may take up to 20 minutes.
+            </Text>
+          </Box>
+        </Step>
+
+        {step == 5 && (
           <Box w="100%" p={6}>
             <Text fontSize="2xl" fontWeight="light" pb={4}>
               Your registration is complete
