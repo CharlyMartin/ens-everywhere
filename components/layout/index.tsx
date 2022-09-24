@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Flex, Text, Box, Button } from "@chakra-ui/react";
 import { ethers } from "ethers";
 
-import { useMetaMask } from "../../hooks/use-metamask";
+import { useWeb3React } from "@web3-react/core";
+import { injected } from "../../chain/web3-connectors";
 
 type Props = {
   children: React.ReactNode;
@@ -11,8 +12,12 @@ type Props = {
 
 export default function Layout(props: Props) {
   const { children } = props;
-  const { account, connectHandler, error } = useMetaMask();
-  console.log("account", account);
+  const { account, activate, error } = useWeb3React();
+  console.log("account", account, error);
+
+  const connectHandler = () => {
+    activate(injected)
+  }
 
   return (
     <Box minH="100vh" bg="gray.50" pb={32}>
@@ -78,7 +83,6 @@ export default function Layout(props: Props) {
             >
               Connect Wallet
             </Button>
-            {error && <Text color="red.500">{error}</Text>}
           </Box>
         )}
       </Flex>
