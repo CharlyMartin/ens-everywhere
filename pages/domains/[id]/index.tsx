@@ -22,6 +22,7 @@ import Step from "../../../components/step";
 import Link from "next/link";
 import { injected } from "../../../chain/web3-connectors";
 import { Client } from '@xmtp/xmtp-js'
+import { ethers } from "ethers";
 
 const RELAYER = '0x8F73bE66CA8c79382f72139be03746343Bf5Faa0'
 
