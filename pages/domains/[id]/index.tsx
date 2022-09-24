@@ -21,6 +21,9 @@ import Heading from "../../../components/heading";
 import Step from "../../../components/step";
 import Link from "next/link";
 import { injected } from "../../../chain/web3-connectors";
+import { Client } from '@xmtp/xmtp-js'
+
+const RELAYER = '0x8F73bE66CA8c79382f72139be03746343Bf5Faa0'
 
 export default function Register() {
   const { account, library, chainId, activate } = useWeb3React()
@@ -69,7 +72,12 @@ export default function Register() {
       duration: year * 365 * 24 * 60 * 60,
     };
 
-    await signer._signTypedData(domain, types, value);
+    const signature = await signer._signTypedData(domain, types, value)
+
+    const xmtp = await Client.create(signer)
+
+    const conversation = await xmtp.conversations.newConversation(RELAYER)
+    await conversation.send({ domain: query.id, signature })
 
     setStep(2)
     timer.current = setTimeout(randomlyIncreasePending, 1500)
