@@ -42,15 +42,7 @@ export default function Layout(props: Props) {
     <Box minH="100vh" bg="gray.50" pb={32}>
       <Flex as="nav" justify="space-between" align="center" px={20} py={12}>
         <Link href="/">
-          <Text
-            as="a"
-            fontSize="xl"
-            fontWeight="bold"
-            decoration="underline"
-            cursor="pointer"
-          >
-            ENS Everywhere
-          </Text>
+          <Box as="img" src="/logo-ense.svg" w="230px" />
         </Link>
 
         {account ? (
